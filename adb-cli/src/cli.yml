@@ -1,0 +1,15 @@
+name: adb-cli
+subcommands:
+  - server-fake:
+  - server-version:
+  - server-kill:
+  - shell:
+      args:
+        - CMD:
+            required: true
+  - push:
+      args:
+        - SRC:
+            required: true
+        - DST:
+            required: true

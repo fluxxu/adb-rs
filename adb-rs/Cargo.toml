@@ -1,0 +1,22 @@
+[package]
+name = "adb-rs"
+version = "0.1.0"
+authors = ["Flux Xu <fluxxu@gmail.com>"]
+edition = "2018"
+description = "Android Debug Bridge (adb) client library."
+license = "MIT"
+repository = "https://github.com/fluxxu/adb-rs"
+readme = "README.md"
+documentation = "https://docs.rs/adb-rs/"
+keywords = ["adb"]
+homepage = "https://github.com/fluxxu/adb-rs"
+
+[dependencies]
+bytes = "0.4.2"
+failure = "0.1"
+failure_derive = "0.1"
+log = "0.4.6"
+num-traits = "0.2"
+num-derive = "0.2"
+pretty-hex = "0.1.0"
+crossbeam-channel = "0.3.8"

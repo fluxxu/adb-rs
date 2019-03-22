@@ -1,0 +1,12 @@
+[package]
+name = "adb-cli"
+version = "0.1.0"
+authors = ["Flux Xu <fluxxu@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+adb-rs = { path = "../adb-rs" }
+clap = {version = "2.32.0", features = ["yaml"]}
+pretty-hex = "0.1.0"
+simplelog = "0.5"
+log = "0.4.6"
