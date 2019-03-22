@@ -6,7 +6,6 @@ edition = "2018"
 description = "Android Debug Bridge (adb) client library."
 license = "MIT"
 repository = "https://github.com/fluxxu/adb-rs"
-readme = "README.md"
 documentation = "https://docs.rs/adb-rs/"
 keywords = ["adb"]
 homepage = "https://github.com/fluxxu/adb-rs"
