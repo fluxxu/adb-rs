@@ -20,10 +20,10 @@ pub enum AdbError {
   #[fail(display = "unexpected data: {:?}", _0)]
   UnexpectedData(Vec<u8>),
 
-  #[fail(display = "disconnected"]
+  #[fail(display = "disconnected")]
   Disconnected,
 
-  #[fail(display = "fail: {}", _0]
+  #[fail(display = "fail: {}", _0)]
   Fail(String),
 }
 
