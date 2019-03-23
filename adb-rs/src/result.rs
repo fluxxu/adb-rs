@@ -29,7 +29,7 @@ pub enum AdbError {
 
 impl AdbError {
   pub fn from_unexpected_command_u32(cmd: u32) -> Self {
-    use crate::Command;
+    use crate::message::Command;
     use num_traits::FromPrimitive;
     if let Some(cmd) = Command::from_u32(cmd) {
       AdbError::UnexpectedCommand(cmd)

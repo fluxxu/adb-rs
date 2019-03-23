@@ -43,11 +43,8 @@ impl Header {
     }
   }
 
-  pub fn get_command(&self) -> AdbResult<Command> {
-    match Command::from_u32(self.command) {
-      Some(cmd) => Ok(cmd),
-      None => Err(AdbError::UnknownCommand(self.command)),
-    }
+  pub fn get_command(&self) -> Option<Command> {
+    Command::from_u32(self.command)
   }
 
   pub fn encode<W>(&self, w: &mut W) -> AdbResult<()>
@@ -82,22 +79,6 @@ impl Header {
       data_crc32: LittleEndian::read_u32(&buf[16..]),
       magic: LittleEndian::read_u32(&buf[20..]),
     })
-  }
-
-  pub fn decode_command<R>(r: &mut R, cmd: Command) -> AdbResult<Self>
-  where
-    R: Read,
-  {
-    let header = Self::decode(r)?;
-    if header.command == cmd as u32 {
-      Ok(header)
-    } else {
-      if let Some(cmd) = Command::from_u32(header.command) {
-        Err(AdbError::UnexpectedCommand(cmd))
-      } else {
-        Err(AdbError::UnknownCommand(header.command))
-      }
-    }
   }
 
   pub fn decode_data<R>(&self, r: &mut R) -> AdbResult<Vec<u8>>

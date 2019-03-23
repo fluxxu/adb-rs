@@ -10,17 +10,18 @@ use super::sync::*;
 use crate::result::*;
 
 pub trait AdbPush {
+  fn push_reader<R: Read + Seek>(&mut self, r: R, remote_path: &str) -> AdbResult<()>;
   fn push<P: AsRef<Path>>(&mut self, local_path: P, remote_path: &str) -> AdbResult<()>;
 }
 
 impl AdbPush for AdbConnection {
-  fn push<P: AsRef<Path>>(&mut self, local_path: P, remote_path: &str) -> AdbResult<()> {
-    let mut file = File::open(local_path)?;
-    let file_size = file.seek(SeekFrom::End(0))?;
-    file.seek(SeekFrom::Start(0))?;
-    let mut r = BufReader::new(file);
+  fn push_reader<R: Read + Seek>(&mut self, r: R, remote_path: &str) -> AdbResult<()> {
+    let mut r = r;
 
-    debug!("file size = 0x{:x}", file_size);
+    let size = r.seek(SeekFrom::End(0))?;
+    r.seek(SeekFrom::Start(0))?;
+
+    debug!("size = 0x{:x}", size);
 
     let stream = self.open_stream("sync:")?;
 
@@ -57,9 +58,9 @@ impl AdbPush for AdbConnection {
 
       let next_pos: u64 = bytes_sent + n as u64;
 
-      assert!(next_pos <= file_size);
+      assert!(next_pos <= size);
 
-      let is_last_chunk = next_pos == file_size;
+      let is_last_chunk = next_pos == size;
       debug!("DATA [0x{:x}:0x{:x}]", bytes_sent, next_pos);
       bytes_sent = bytes_sent + n as u64;
 
@@ -98,7 +99,7 @@ impl AdbPush for AdbConnection {
       }
     }
 
-    assert_eq!(bytes_sent as u64, file_size);
+    assert_eq!(bytes_sent as u64, size);
 
     let reply = stream.sync_recv_command(Command::A_WRTE)?;
     debug!("result = {}", String::from_utf8_lossy(&reply.payload));
@@ -117,5 +118,11 @@ impl AdbPush for AdbConnection {
     stream.sync_recv_command(Command::A_CLSE)?;
 
     Ok(())
+  }
+
+  fn push<P: AsRef<Path>>(&mut self, local_path: P, remote_path: &str) -> AdbResult<()> {
+    let file = File::open(local_path)?;
+    let r = BufReader::new(file);
+    self.push_reader(r, remote_path)
   }
 }

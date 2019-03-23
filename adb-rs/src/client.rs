@@ -1,7 +1,6 @@
 use bytes::buf::FromBuf;
 use bytes::{Bytes, BytesMut};
 use crossbeam_channel::{bounded, select, unbounded, Receiver, Sender};
-use num_traits::FromPrimitive;
 use std::collections::HashMap;
 use std::io::prelude::*;
 use std::net::{SocketAddr, TcpStream, ToSocketAddrs};
@@ -39,7 +38,7 @@ impl AdbClient {
     Connect::new(&self.system_identity).encode(&mut stream)?;
 
     let resp = Header::decode(&mut stream)?;
-    let data = match Command::from_u32(resp.command) {
+    let data = match resp.get_command() {
       Some(Command::A_CNXN) => resp.decode_data(&mut stream)?,
       Some(Command::A_AUTH) => {
         return Err(AdbError::AuthNotSupported);
@@ -173,7 +172,7 @@ impl AdbClient {
                   let locked = streams.read().unwrap();
                   match locked.get(&packet.header.arg1) {
                     Some(ctx) => {
-                      if Command::from_u32(packet.header.command).is_some() {
+                      if packet.header.get_command().is_some() {
                         if let Err(_) = ctx.stream_reader_s.send(packet) {
                           closed_local_ids.push(local_id);
                         }
@@ -337,7 +336,7 @@ impl AdbConnection {
 
     let open_packet = stream_reader_r.recv().map_err(|_| AdbError::Disconnected)?;
     if open_packet.header.command != Command::A_OKAY as u32 {
-      if let Some(cmd) = Command::from_u32(open_packet.header.command) {
+      if let Some(cmd) = open_packet.header.get_command() {
         return Err(AdbError::UnexpectedCommand(cmd));
       } else {
         return Err(AdbError::UnknownCommand(open_packet.header.command));
@@ -396,7 +395,9 @@ impl AdbStream {
       .map_err(|_| AdbError::Disconnected)?;
 
     Ok(AdbStreamPacket {
-      command: Command::from_u32(packet.header.command)
+      command: packet
+        .header
+        .get_command()
         .ok_or_else(|| AdbError::UnknownCommand(packet.header.command))?,
       payload: packet.payload,
     })
@@ -406,7 +407,9 @@ impl AdbStream {
     use crossbeam_channel::TryRecvError;
     match self.stream_reader.try_recv() {
       Ok(packet) => Ok(Some(AdbStreamPacket {
-        command: Command::from_u32(packet.header.command)
+        command: packet
+          .header
+          .get_command()
           .ok_or_else(|| AdbError::UnknownCommand(packet.header.command))?,
         payload: packet.payload,
       })),

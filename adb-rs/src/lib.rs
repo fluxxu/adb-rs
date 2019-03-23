@@ -18,4 +18,3 @@ pub mod push;
 pub mod shell;
 
 pub use self::client::{AdbClient, AdbConnection};
-pub use self::message::{Command, Header};
