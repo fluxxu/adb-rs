@@ -229,9 +229,9 @@ impl AdbClient {
       device_system_identity: device_id.to_string(),
       device_version: resp.arg0,
       device_max_data: resp.arg1,
-      tcp_stream: Some(stream),
+      tcp_stream: stream,
       local_id_counter: 0,
-      workers: [reader_worker, writer_worker, dispatch_worker],
+      workers: vec![reader_worker, writer_worker, dispatch_worker],
       streams,
       conn_writer_s,
     })
@@ -281,11 +281,23 @@ pub struct AdbConnection {
   device_system_identity: String,
   device_version: u32,
   device_max_data: u32,
-  tcp_stream: Option<TcpStream>,
+  tcp_stream: TcpStream,
   local_id_counter: u32,
-  workers: [JoinHandle<()>; 3],
+  workers: Vec<JoinHandle<()>>,
   streams: Arc<RwLock<HashMap<u32, StreamContext>>>,
   conn_writer_s: Sender<ConnectionPacket>,
+}
+
+impl Drop for AdbConnection {
+  fn drop(&mut self) {
+    use std::net::Shutdown;
+    self.tcp_stream.shutdown(Shutdown::Both).ok();
+    let (conn_writer_s, _) = bounded::<ConnectionPacket>(0);
+    ::std::mem::replace(&mut self.conn_writer_s, conn_writer_s);
+    for w in ::std::mem::replace(&mut self.workers, vec![]) {
+      w.join().ok();
+    }
+  }
 }
 
 impl AdbConnection {
